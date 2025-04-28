@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Key Generator Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
+        input, button { padding: 8px; margin: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #444; padding: 10px; text-align: center; }
+        th { background: #222; }
+    </style>
+</head>
+<body>
+
+<h1>Key Generator Panel</h1>
+
+<label>Device Limit:</label>
+<input type="number" id="deviceLimit" min="1" value="1">
+
+<label>Expiry Date:</label>
+<input type="date" id="expiryDate">
+
+<button onclick="generateKey()">Generate Key</button>
+<button onclick="downloadKeys()">Download Keys JSON</button>
+
+<table>
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Device Limit</th>
+            <th>Expiry Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="keysTable"></tbody>
+</table>
+
+<script>
+    let keys = [];
+
+    function randomKey() {
+        let part = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+        return `${part()}-${part()}-${part()}`;
+    }
+
+    function generateKey() {
+        const deviceLimit = document.getElementById('deviceLimit').value;
+        const expiryDate = document.getElementById('expiryDate').value;
+        if (!expiryDate) {
+            alert("Please set an expiration date.");
+            return;
+        }
+
+        const newKey = {
+            key: randomKey(),
+            device_limit: parseInt(deviceLimit),
+            used_devices: [],
+            expiry: expiryDate
+        };
+
+        keys.push(newKey);
+        updateTable();
+    }
+
+    function updateTable() {
+        const table = document.getElementById('keysTable');
+        table.innerHTML = '';
+
+        keys.forEach((keyData, index) => {
+            const row = `<tr>
+                <td>${keyData.key}</td>
+                <td>${keyData.device_limit}</td>
+                <td>${keyData.expiry}</td>
+                <td><button onclick="deleteKey(${index})">Delete</button></td>
+            </tr>`;
+            table.innerHTML += row;
+        });
+    }
+
+    function deleteKey(index) {
+        if (confirm("Delete this key?")) {
+            keys.splice(index, 1);
+            updateTable();
+        }
+    }
+
+    function downloadKeys() {
+        const blob = new Blob([JSON.stringify(keys, null, 4)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'keys.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+</body>
+</html>
