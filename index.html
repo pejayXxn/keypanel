@@ -4,97 +4,94 @@
     <meta charset="UTF-8">
     <title>Key Generator Panel</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
-        input, button { padding: 8px; margin: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #444; padding: 10px; text-align: center; }
-        th { background: #222; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #keysList {
+            margin-top: 20px;
+        }
     </style>
+    <script>
+        // Password Protection
+        var password = prompt("Enter password to access the panel:");
+
+        if (password !== "admin123") {
+            alert("Incorrect password!");
+            window.location.href = "https://www.google.com"; // Redirect if wrong password
+        }
+
+        // Key Storage
+        var keys = [];
+
+        function generateKey() {
+            var expirationDays = prompt("Enter how many days the key will be valid:", "7");
+            if (!expirationDays || isNaN(expirationDays)) {
+                alert("Invalid input. Please enter a number.");
+                return;
+            }
+
+            var deviceLimit = prompt("Enter device limit for this key:", "1");
+            if (!deviceLimit || isNaN(deviceLimit)) {
+                alert("Invalid input. Please enter a number.");
+                return;
+            }
+
+            var now = new Date();
+            now.setDate(now.getDate() + parseInt(expirationDays));
+            var expirationDate = now.toISOString().split('T')[0];
+
+            var key = 'KEY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            var keyData = {
+                key: key,
+                deviceLimit: parseInt(deviceLimit),
+                expirationDate: expirationDate
+            };
+
+            keys.push(keyData);
+            displayKeys();
+        }
+
+        function displayKeys() {
+            var list = document.getElementById("keysList");
+            list.innerHTML = "";
+            keys.forEach(function(k, index) {
+                list.innerHTML += `<div>${index + 1}. ${k.key} | Devices: ${k.deviceLimit} | Expire: ${k.expirationDate}</div>`;
+            });
+        }
+
+        function downloadKeys() {
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(keys, null, 4));
+            var downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "keys.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    </script>
 </head>
 <body>
+    <h1>Key Generator Panel</h1>
+    <button onclick="generateKey()">Generate New Key</button>
+    <button onclick="downloadKeys()">Download keys.json</button>
 
-<h1>Key Generator Panel</h1>
-
-<label>Device Limit:</label>
-<input type="number" id="deviceLimit" min="1" value="1">
-
-<label>Expiry Date:</label>
-<input type="date" id="expiryDate">
-
-<button onclick="generateKey()">Generate Key</button>
-<button onclick="downloadKeys()">Download Keys JSON</button>
-
-<table>
-    <thead>
-        <tr>
-            <th>Key</th>
-            <th>Device Limit</th>
-            <th>Expiry Date</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody id="keysTable"></tbody>
-</table>
-
-<script>
-    let keys = [];
-
-    function randomKey() {
-        let part = () => Math.random().toString(36).substring(2, 6).toUpperCase();
-        return `${part()}-${part()}-${part()}`;
-    }
-
-    function generateKey() {
-        const deviceLimit = document.getElementById('deviceLimit').value;
-        const expiryDate = document.getElementById('expiryDate').value;
-        if (!expiryDate) {
-            alert("Please set an expiration date.");
-            return;
-        }
-
-        const newKey = {
-            key: randomKey(),
-            device_limit: parseInt(deviceLimit),
-            used_devices: [],
-            expiry: expiryDate
-        };
-
-        keys.push(newKey);
-        updateTable();
-    }
-
-    function updateTable() {
-        const table = document.getElementById('keysTable');
-        table.innerHTML = '';
-
-        keys.forEach((keyData, index) => {
-            const row = `<tr>
-                <td>${keyData.key}</td>
-                <td>${keyData.device_limit}</td>
-                <td>${keyData.expiry}</td>
-                <td><button onclick="deleteKey(${index})">Delete</button></td>
-            </tr>`;
-            table.innerHTML += row;
-        });
-    }
-
-    function deleteKey(index) {
-        if (confirm("Delete this key?")) {
-            keys.splice(index, 1);
-            updateTable();
-        }
-    }
-
-    function downloadKeys() {
-        const blob = new Blob([JSON.stringify(keys, null, 4)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'keys.json';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-</script>
-
+    <div id="keysList"></div>
 </body>
 </html>
